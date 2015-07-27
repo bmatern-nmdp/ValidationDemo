@@ -42,7 +42,7 @@ public class SchematronValidator
         {
             URL jarURL = SchematronValidator.class.getResource(jarFileName);
             URI jarURI = jarURL.toURI();
-            loadedProbatronClasses = Utilities.loadJarElements(new File(jarURI));
+            loadedProbatronClasses = loadJarElements(new File(jarURI));
             
             //We're using some reflection here, so object types are vague
             Object vr = null;
@@ -63,7 +63,7 @@ public class SchematronValidator
             theSchema = ctor.newInstance(currentSession, schemaFileURL);
             
             //Validate against a schematron schema, using probatron's validateCandidate method
-            vr = Utilities.callReflectedMethod(theSchema,"validateCandidate", xmlInputStream, Class.forName("java.io.InputStream"));
+            vr = callReflectedMethod(theSchema,"validateCandidate", xmlInputStream, Class.forName("java.io.InputStream"));
 
 
             Object validationReportObject = vr;
@@ -166,7 +166,7 @@ public class SchematronValidator
             theSchema = ctor.newInstance(currentSession, schemaFileURL);
             
             //Validate against a schematron schema, using probatron's validateCandidate method
-            vr = Utilities.callReflectedMethod(theSchema,"validateCandidate", xmlInputStream, Class.forName("java.io.InputStream"));
+            vr = callReflectedMethod(theSchema,"validateCandidate", xmlInputStream, Class.forName("java.io.InputStream"));
         } 
         catch(Exception e)
         {
