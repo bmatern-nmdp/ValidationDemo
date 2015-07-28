@@ -129,7 +129,8 @@ public class SchematronValidator
         }
         catch(Exception e)
         {
-            System.out.println("Error during schematron validation:" + e);
+            System.out.println("Error during schematron validation:\n");
+            e.printStackTrace();
         }
         return null;
     }
