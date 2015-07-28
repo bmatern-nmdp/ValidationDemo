@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 
+
+    MiringValidator  Semantic Validator for MIRING compliant HML
+    Copyright (c) 2015 National Marrow Donor Program (NMDP)
+
+    This library is free software; you can redistribute it and/or modify it
+    under the terms of the GNU Lesser General Public License as published
+    by the Free Software Foundation; either version 3 of the License, or (at
+    your option) any later version.
+
+    This library is distributed in the hope that it will be useful, but WITHOUT
+    ANY WARRANTY; with out even the implied warranty of MERCHANTABILITY or
+    FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
+    License for more details.
+
+    You should have received a copy of the GNU Lesser General Public License
+    along with this library;  if not, write to the Free Software Foundation,
+    Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA.
+
+    > http://www.gnu.org/licenses/lgpl.html
+
+ -->
+
+
+<pattern id="Miring.Element.2" xmlns="http://purl.oclc.org/dsdl/schematron">
+
+    <!-- 
+        Rule 2.2.c
+        end >= start
+        Only report if there are actually @start and @end attributes.
+     -->
+    <rule context="hml:reference-sequence">
+        <report test="(number(@start) > number(@end)) and boolean(@start) and boolean(@end)">On a reference sequence node, end attribute should be greater than or equal to the start attribute.</report>
+
+    <!--
+        Rule 2.2.1.c
+        Every <reference-sequence> id corresponds to at least one <consensus-sequence-block> id
+        Get every id belonging to a reference-sequence.
+        Assert that there is a node with a idref of "@id" on a node named "consensus-sequence-block:
+     -->
+        <let name="refSeqId" value="attribute(id)" />
+
+        <assert test="//hml:consensus-sequence-block[@reference-sequence-id=$refSeqId]">A reference-sequence node has an id attribute with no corresponding consensus-sequence-block id attribute.</assert>
+    </rule>
+
+</pattern>

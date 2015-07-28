@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 
+
+    MiringValidator  Semantic Validator for MIRING compliant HML
+    Copyright (c) 2015 National Marrow Donor Program (NMDP)
+
+    This library is free software; you can redistribute it and/or modify it
+    under the terms of the GNU Lesser General Public License as published
+    by the Free Software Foundation; either version 3 of the License, or (at
+    your option) any later version.
+
+    This library is distributed in the hope that it will be useful, but WITHOUT
+    ANY WARRANTY; with out even the implied warranty of MERCHANTABILITY or
+    FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
+    License for more details.
+
+    You should have received a copy of the GNU Lesser General Public License
+    along with this library;  if not, write to the Free Software Foundation,
+    Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA.
+
+    > http://www.gnu.org/licenses/lgpl.html
+
+ -->
+
+
+<pattern id="Miring.Element.5" xmlns="http://purl.oclc.org/dsdl/schematron">
+
+    <!--
+        Rule 5.2.b
+        end >= start
+      -->
+    <rule context="hml:variant">
+        <assert test="number(@end) >= number(@start)">On a variant node, end attribute should be greater than or equal to the start attribute.</assert>
+
+    <!--
+        Rule 5.2.d
+        variant:start >= refseq:start && variant:end <= refseq:end
+      -->
+        <let name="varRefSeqId" value="parent::*/@reference-sequence-id" />
+        <let name="varStart" value="attribute(start)" />
+        <let name="varEnd" value="attribute(end)" />
+        
+        <assert test="//hml:reference-sequence[@id = $varRefSeqId and @start &lt;= $varStart]">The start attribute on a variant node should be greater than or equal to the start attribute on the corresponding reference-sequence node.</assert>
+        <assert test="//hml:reference-sequence[@id = $varRefSeqId and @end &gt;= $varEnd]">The end attribute on a variant node should be less than or equal to the end attribute on the corresponding reference-sequence node.</assert>
+      
+    <!--
+        Rule 5.3.b and 5.3.c
+        IDs are non-negative integers, ranging from 0:n-1
+      -->
+        <let name="varID" value="replace(number(attribute(id)),'NaN','?')" />
+        <let name="prevVarID" value="replace(number(preceding-sibling::*[1]/@id),'NaN','?')" />
+        <let name="nextVarID" value="replace(number(following-sibling::*[1]/@id),'NaN','?')" />
+        
+        <report test="$varID = '?'">The variant nodes under a single consensus-sequence-block must have id attributes that are integers ranging from 0:n-1, where n is the number of variants.</report>
+        <assert test="$nextVarID=($varID + 1) or $nextVarID='?'" >The variant nodes under a single consensus-sequence-block must have id attributes that are integers ranging from 0:n-1, where n is the number of variants.</assert>
+        <assert test="$prevVarID=($varID - 1) or $prevVarID='?'" >The variant nodes under a single consensus-sequence-block must have id attributes that are integers ranging from 0:n-1, where n is the number of variants.</assert>
+        <assert test="../hml:variant[@id = '0']" >The variant nodes under a single consensus-sequence-block must have id attributes that are integers ranging from 0:n-1, where n is the number of variants.</assert> -->
+    </rule>
+
+</pattern>
