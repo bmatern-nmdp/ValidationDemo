@@ -29,14 +29,30 @@ public class SchematronValidator
     static ClassLoader loadedProbatronClasses;
     static String jarFileName = "/jar/probatron.jar";
 
+    // The main method is The starting point.
+    public static void main(String[] args)
+    {
+        if(args.length == 2)
+        {
+            // args[0] = xml file name
+            // args[0] = schematron file name
+            System.out.println("Attempting a Schematron Validation of \"" + args[0] + "\" against schema \"" + args[1] + "\".\n");
+            validate(XMLReader.readFile(args[0]), args[1]);
+        }
+        else
+        {
+            System.out.println("The Schematron Validator expects exactly 2 arguments: The XML Path+Name, and the Schema Path+Name");
+        }
+    }
+
     /**
      * Perform a schematron validation for an xml string against an array of schemaFileName strings.
      *
-     * @param xml a String containing the xml to validate
+     * @param xmlText a String containing the xml to validate
      * @param schemaFileNames an array of Strings containing the names of the schema file resources to validate against
      * @return an array of ValidationError objects found during validation
      */
-    public static boolean validate(String xml, String schemaFileName)
+    public static void validate(String xmlText, String schemaFileName)
     {
         try
         {
@@ -50,7 +66,7 @@ public class SchematronValidator
             Object theSchema = null;
 
             URL schemaFileURL = SchematronValidator.class.getResource(schemaFileName);
-            InputStream xmlInputStream = new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8));            
+            InputStream xmlInputStream = new ByteArrayInputStream(xmlText.getBytes(StandardCharsets.UTF_8));            
            
             //A org.probatron.SchematronSchema object needs to have a Session object when it calls validateCandidate(), or else Null Pointers.
             //So I create a session object here to please it.
@@ -80,7 +96,49 @@ public class SchematronValidator
         {
             System.out.println("Exception in validate: " + e);
         }
-        return true;
+        //return true;
+    }
+
+    /**
+     * Perform a schematron validation for an xml string against an single schematron schema.
+     * This method mimics Probatron's Session.doValidation.
+     * 
+     * @param xml a String containing the xml to validate
+     * @param schemaLocation an String containing the name of the schema file resource to validate against
+     * @return an object which is an org.probatron.ValidationReport objects.
+     */
+    private static Object doValidation(String xml, String schemaLocation) 
+    {
+        //We're using some reflection here, so object types are vague
+        //vr = org.probatron.ValidationReport
+        Object vr = null;
+        //theSchema = org.probatron.SchematronSchema
+        Object theSchema = null;
+        
+        try 
+        {
+            URL schemaFileURL = SchematronValidator.class.getResource(schemaLocation);
+            InputStream xmlInputStream = new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8));            
+           
+            //A org.probatron.SchematronSchema object needs to have a Session object when it calls validateCandidate(), or else Null Pointers.
+            //So I create a session object here to please it.
+            Class sessionClass= loadedProbatronClasses.loadClass("org.probatron.Session");
+            Object currentSession = sessionClass.newInstance();
+            
+            //Create a SchematronSchema object, using constructor that takes a Session and a schema URL
+            Class schematronSchemaClass= loadedProbatronClasses.loadClass("org.probatron.SchematronSchema");
+            Constructor ctor = schematronSchemaClass.getDeclaredConstructor(sessionClass, URL.class);
+            theSchema = ctor.newInstance(currentSession, schemaFileURL);
+            
+            //Validate against a schematron schema, using probatron's validateCandidate method
+            vr = callReflectedMethod(theSchema,"validateCandidate", xmlInputStream, Class.forName("java.io.InputStream"));
+        } 
+        catch(Exception e)
+        {
+            System.out.println("Exception in doValidation: " + e);
+        }
+
+        return vr;
     }
     
     /**
@@ -133,47 +191,5 @@ public class SchematronValidator
             e.printStackTrace();
         }
         return null;
-    }
-
-    /**
-     * Perform a schematron validation for an xml string against an single schematron schema.
-     * This method mimics Probatron's Session.doValidation.
-     * 
-     * @param xml a String containing the xml to validate
-     * @param schemaLocation an String containing the name of the schema file resource to validate against
-     * @return an object which is an org.probatron.ValidationReport objects.
-     */
-    private static Object doValidation(String xml, String schemaLocation) 
-    {
-        //We're using some reflection here, so object types are vague
-        //vr = org.probatron.ValidationReport
-        Object vr = null;
-        //theSchema = org.probatron.SchematronSchema
-        Object theSchema = null;
-        
-        try 
-        {
-            URL schemaFileURL = SchematronValidator.class.getResource(schemaLocation);
-            InputStream xmlInputStream = new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8));            
-           
-            //A org.probatron.SchematronSchema object needs to have a Session object when it calls validateCandidate(), or else Null Pointers.
-            //So I create a session object here to please it.
-            Class sessionClass= loadedProbatronClasses.loadClass("org.probatron.Session");
-            Object currentSession = sessionClass.newInstance();
-            
-            //Create a SchematronSchema object, using constructor that takes a Session and a schema URL
-            Class schematronSchemaClass= loadedProbatronClasses.loadClass("org.probatron.SchematronSchema");
-            Constructor ctor = schematronSchemaClass.getDeclaredConstructor(sessionClass, URL.class);
-            theSchema = ctor.newInstance(currentSession, schemaFileURL);
-            
-            //Validate against a schematron schema, using probatron's validateCandidate method
-            vr = callReflectedMethod(theSchema,"validateCandidate", xmlInputStream, Class.forName("java.io.InputStream"));
-        } 
-        catch(Exception e)
-        {
-            System.out.println("Exception in doValidation: " + e);
-        }
-
-        return vr;
     }
 }
