@@ -37,5 +37,6 @@ docker run docker-whale
 read -p "***Press [Enter] to do that again, because that was really fun"
 docker run docker-whale
 
-read -p "***Press [Enter] to delete all local images"
-docker rmi -f $(docker images -q)
+read -p "***NOT deleting the images.  Uncomment the last 2 lines in the script to delete images.  (They're kinda big.)"
+# read -p "***Press [Enter] to delete all local images"
+# docker rmi -f $(docker images -q)
