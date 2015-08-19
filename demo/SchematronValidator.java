@@ -118,13 +118,13 @@ public class SchematronValidator
         try 
         {
             method = callingObject.getClass().getDeclaredMethod(methodName, parameterClass);
-            System.out.println("method: " + method);
-            System.out.println("callingObject: " + callingObject);
-            System.out.println("singleParameter: " + singleParameter);
+            //System.out.println("method: " + method);
+            //System.out.println("callingObject: " + callingObject);
+            //System.out.println("singleParameter: " + singleParameter);
             method.setAccessible(true);
-            System.out.println("method: " + method);
+            //System.out.println("method: " + method);
             Object results = method.invoke(callingObject, singleParameter);
-            System.out.println("results: " + results);
+            //System.out.println("results: " + results);
             return results;
         } 
         catch (Exception e)
