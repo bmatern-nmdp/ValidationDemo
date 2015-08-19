@@ -90,12 +90,9 @@ public class SchematronValidator
             //Validate against a schematron schema, using probatron's validateCandidate method
             validationResultObj = callReflectedMethod(schemaObj,"validateCandidate", xmlInputStream, Class.forName("java.io.InputStream"));
 
-            Object validationReportObject = validationResultObj;
-            //Object validationReportObject = doValidation(xml, schemaFileName);
-
             //Stream out the schematron report to a String
             ByteArrayOutputStream myBaos = new ByteArrayOutputStream();
-            callReflectedMethod(validationReportObject, "streamOut", myBaos, Class.forName("java.io.OutputStream"));
+            callReflectedMethod(validationResultObj, "streamOut", myBaos, Class.forName("java.io.OutputStream"));
             String resultString = myBaos.toString();
             
             System.out.println("Schematron Validation Results:\n" + resultString);
