@@ -1,4 +1,3 @@
-
 import java.io.ByteArrayOutputStream;
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -29,49 +28,71 @@ public class SchematronValidator
     static ClassLoader loadedProbatronClasses;
     static String jarFileName = "/jar/probatron.jar";
 
+    // The main method is The starting point.
+    public static void main(String[] args)
+    {
+        if(args.length == 2)
+        {
+            String xmlFileName = args[0];
+            String schematronFileName = args[1];
+            System.out.println("Attempting a Schematron Validation of \"" + xmlFileName 
+                + "\" against schema \"" + schematronFileName + "\".\n");
+            validate(XMLReader.readFile(xmlFileName), schematronFileName);
+        }
+        else
+        {
+            System.out.println("The Schematron Validator expects exactly 2 arguments: The XML Path+Name, and the Schema Path+Name");
+            
+            //String xmlFileName = "hml/Element4.CSB.bad.attributes.xml";
+            //String schematronFileName = "schematron/MiringAll.sch";
+            //validate(XMLReader.readFile(xmlFileName), schematronFileName);
+        }
+    }
+
     /**
      * Perform a schematron validation for an xml string against an array of schemaFileName strings.
      *
-     * @param xml a String containing the xml to validate
+     * @param xmlText a String containing the xml to validate
      * @param schemaFileNames an array of Strings containing the names of the schema file resources to validate against
      * @return an array of ValidationError objects found during validation
      */
-    public static boolean validate(String xml, String schemaFileName)
+    public static void validate(String xmlText, String schemaFileName)
     {
         try
         {
             URL jarURL = SchematronValidator.class.getResource(jarFileName);
             URI jarURI = jarURL.toURI();
+            //System.out.println("jarURI: " + jarURI);
             loadedProbatronClasses = loadJarElements(new File(jarURI));
+            //System.out.println("loadedProbatronClasses: " + loadedProbatronClasses);
             
             //We're using some reflection here, so object types are vague
-            Object vr = null;
+            Object validationResultObj = null;
             //theSchema = org.probatron.SchematronSchema
-            Object theSchema = null;
+            Object schemaObj = null;
 
             URL schemaFileURL = SchematronValidator.class.getResource(schemaFileName);
-            InputStream xmlInputStream = new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8));            
+            //System.out.println("schemaFileURL: " + schemaFileURL);
+            InputStream xmlInputStream = new ByteArrayInputStream(xmlText.getBytes(StandardCharsets.UTF_8));
+            //System.out.println("xmlInputStream: " + xmlInputStream);         
            
             //A org.probatron.SchematronSchema object needs to have a Session object when it calls validateCandidate(), or else Null Pointers.
             //So I create a session object here to please it.
+            //It's not that important.
             Class sessionClass= loadedProbatronClasses.loadClass("org.probatron.Session");
             Object currentSession = sessionClass.newInstance();
             
             //Create a SchematronSchema object, using constructor that takes a Session and a schema URL
             Class schematronSchemaClass= loadedProbatronClasses.loadClass("org.probatron.SchematronSchema");
             Constructor ctor = schematronSchemaClass.getDeclaredConstructor(sessionClass, URL.class);
-            theSchema = ctor.newInstance(currentSession, schemaFileURL);
+            schemaObj = ctor.newInstance(currentSession, schemaFileURL);
             
             //Validate against a schematron schema, using probatron's validateCandidate method
-            vr = callReflectedMethod(theSchema,"validateCandidate", xmlInputStream, Class.forName("java.io.InputStream"));
-
-
-            Object validationReportObject = vr;
-            //Object validationReportObject = doValidation(xml, schemaFileName);
+            validationResultObj = callReflectedMethod(schemaObj,"validateCandidate", xmlInputStream, Class.forName("java.io.InputStream"));
 
             //Stream out the schematron report to a String
             ByteArrayOutputStream myBaos = new ByteArrayOutputStream();
-            callReflectedMethod(validationReportObject, "streamOut", myBaos, Class.forName("java.io.OutputStream"));
+            callReflectedMethod(validationResultObj, "streamOut", myBaos, Class.forName("java.io.OutputStream"));
             String resultString = myBaos.toString();
             
             System.out.println("Schematron Validation Results:\n" + resultString);
@@ -80,9 +101,8 @@ public class SchematronValidator
         {
             System.out.println("Exception in validate: " + e);
         }
-        return true;
     }
-    
+
     /**
      * Call a reflected method within a class.  This method must accept a single parameter
      *
@@ -98,12 +118,19 @@ public class SchematronValidator
         try 
         {
             method = callingObject.getClass().getDeclaredMethod(methodName, parameterClass);
+            System.out.println("method: " + method);
+            System.out.println("callingObject: " + callingObject);
+            System.out.println("singleParameter: " + singleParameter);
             method.setAccessible(true);
-            return method.invoke(callingObject, singleParameter);
+            System.out.println("method: " + method);
+            Object results = method.invoke(callingObject, singleParameter);
+            System.out.println("results: " + results);
+            return results;
         } 
         catch (Exception e)
         {
             System.out.println("Exception while calling reflected method: " + e);
+            e.printStackTrace();
         }
 
         return null;
@@ -133,47 +160,5 @@ public class SchematronValidator
             e.printStackTrace();
         }
         return null;
-    }
-
-    /**
-     * Perform a schematron validation for an xml string against an single schematron schema.
-     * This method mimics Probatron's Session.doValidation.
-     * 
-     * @param xml a String containing the xml to validate
-     * @param schemaLocation an String containing the name of the schema file resource to validate against
-     * @return an object which is an org.probatron.ValidationReport objects.
-     */
-    private static Object doValidation(String xml, String schemaLocation) 
-    {
-        //We're using some reflection here, so object types are vague
-        //vr = org.probatron.ValidationReport
-        Object vr = null;
-        //theSchema = org.probatron.SchematronSchema
-        Object theSchema = null;
-        
-        try 
-        {
-            URL schemaFileURL = SchematronValidator.class.getResource(schemaLocation);
-            InputStream xmlInputStream = new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8));            
-           
-            //A org.probatron.SchematronSchema object needs to have a Session object when it calls validateCandidate(), or else Null Pointers.
-            //So I create a session object here to please it.
-            Class sessionClass= loadedProbatronClasses.loadClass("org.probatron.Session");
-            Object currentSession = sessionClass.newInstance();
-            
-            //Create a SchematronSchema object, using constructor that takes a Session and a schema URL
-            Class schematronSchemaClass= loadedProbatronClasses.loadClass("org.probatron.SchematronSchema");
-            Constructor ctor = schematronSchemaClass.getDeclaredConstructor(sessionClass, URL.class);
-            theSchema = ctor.newInstance(currentSession, schemaFileURL);
-            
-            //Validate against a schematron schema, using probatron's validateCandidate method
-            vr = callReflectedMethod(theSchema,"validateCandidate", xmlInputStream, Class.forName("java.io.InputStream"));
-        } 
-        catch(Exception e)
-        {
-            System.out.println("Exception in doValidation: " + e);
-        }
-
-        return vr;
     }
 }
