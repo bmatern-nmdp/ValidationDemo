@@ -2,6 +2,7 @@ REM You probably don't need to recompile the code, since I provided the .class f
 REM If you want to rebuild the code, you need Java SE with JDK, available here:
 REM http://www.oracle.com/technetwork/java/javase/downloads/index.html
 
+REM compile
 javac SchematronValidator.java
 
 echo "***Press [Enter] to run a Schematron Validation using Probatron.jar"

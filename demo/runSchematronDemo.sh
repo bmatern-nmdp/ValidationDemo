@@ -2,6 +2,7 @@
 # If you want to rebuild the code, you need Java SE with JDK, available here:
 # http://www.oracle.com/technetwork/java/javase/downloads/index.html
 
+# compile
 javac SchematronValidator.java
 
 read -p "***Press [Enter] to run a Schematron Validation using Probatron.jar"
